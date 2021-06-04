@@ -2,14 +2,7 @@ import cv2
 import numpy as np
 import random
 
-def r256():
-    return random.randrange(256)
-
-def is_white(cell):
-    return sum(cell) == 765
-
-def generate_random_color():
-    return (r256(), r256(), r256())
+from utils import *
 
 def get_neighbor(img, pos, direction):
     # NESW
@@ -32,14 +25,6 @@ def get_neighbor(img, pos, direction):
 
 def get_neighbors(img, pos):
     return [get_neighbor(img, pos, d) for d in range(4)]
-
-def generate_unique_color(already):
-    while True:
-        color = generate_random_color()
-        if is_white(color):
-            continue
-        if color not in already:
-            return color
 
 def color_section(img, start, color):
     to_visit = [start]

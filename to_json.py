@@ -2,8 +2,7 @@ import cv2
 import numpy as np
 import json
 
-def is_black(cell):
-    return sum(cell) == 0
+from utils import *
 
 def good_start(img, pos):
     return (pos[0] == 0 or is_black(img[pos[0] - 1][pos[1]])) and (pos[1] == 0 or is_black(img[pos[0]][pos[1] - 1]))
