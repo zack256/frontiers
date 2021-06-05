@@ -19,3 +19,6 @@ def generate_unique_color(already):
             continue
         if color not in already:
             return color
+
+def bgr_to_rgb(bgr):
+    return bgr[::-1]

@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import json
-import random
 
 from utils import *
 
@@ -11,11 +10,11 @@ def se(struc, idx, compare_with, do_max):    # set extreme
     else:
         struc[idx] = min(compare_with, struc[idx])
 
-def gather_sections_from_sectioned_image(image, dims):
+def gather_sections_from_sectioned_image(image):
     section_colors = {}
     sections = []
-    for i in range(dims[0]):
-        for j in range(dims[1]):
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
             cell = tuple(image[i][j])
             if is_black(cell):
                 continue
@@ -30,11 +29,19 @@ def gather_sections_from_sectioned_image(image, dims):
         sections.append((k, section_colors[k]))
     return sections
 
+def show_image_workaround(title, image):
+    # investigate further!!!
+    cv2.imshow(title, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+
 def show_specific_section(image, sections, idx):
     margin = 20 # for context
     extrema = sections[idx][1]
-    cropped_image = image[extrema[0] - margin : extrema[1] + margin, extrema[2] - margin : extrema[3] + margin]
+    cropped_image = image[max(0, extrema[0] - margin) : min(image.shape[0], extrema[1] + margin), max(0, extrema[2] - margin) : min(image.shape[1], extrema[3] + margin)]
     show_image_workaround("Section #{}".format(idx), cropped_image)
+    #cv2.imshow("Section #{}".format(idx), cropped_image)
 
 def black_out_section(image_to_edit, point, new_color = None):
     if not new_color:
