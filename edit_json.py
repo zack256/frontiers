@@ -46,7 +46,8 @@ def show_specific_section(image, sections, idx):
 def black_out_section(image_to_edit, point, new_color = None):
     if not new_color:
         new_color = (0, 0, 0)   # default blacking out
-    color = image_to_edit[point[0]][point[1]].copy()
+    #color = tuple(image_to_edit[point[0]][point[1]].copy())
+    color = tuple(image_to_edit[point[0]][point[1]])
     cnt = 0
     to_do = [(point[0], point[1])]
     image_to_edit[point[0]][point[1]] = np.array(new_color)
@@ -56,8 +57,9 @@ def black_out_section(image_to_edit, point, new_color = None):
         cnt += 1
         neighbors = [(pt[0] + 1, pt[1]), (pt[0] - 1, pt[1]), (pt[0], pt[1] - 1), (pt[0], pt[1] + 1)]
         for neighbor in neighbors:
-            if image_to_edit[neighbor[0]][neighbor[1]] == color:
+            if tuple(image_to_edit[neighbor[0]][neighbor[1]]) == color:
                 image_to_edit[neighbor[0]][neighbor[1]] = np.array(new_color)
+                to_do.append((neighbor[0], neighbor[1]))
 
     print(cnt, "painted tiles")
 
