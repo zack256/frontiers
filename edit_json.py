@@ -24,7 +24,7 @@ def gather_sections_from_sectioned_image(image):
                 se(section_colors[cell], 2, j, False)
                 se(section_colors[cell], 3, j, True)
             else:
-                section_colors[cell] = [i, i, j, j, (i, j)]  # northernmost pt, south, west, east. also includes a point in the image for sample.
+                section_colors[cell] = [i, i, j, j]  # northernmost pt, south, west, east.
     for k in section_colors:
         sections.append((k, section_colors[k]))
     return sections
@@ -43,23 +43,29 @@ def show_specific_section(image, sections, idx):
     show_image_workaround("Section #{}".format(idx), cropped_image)
     #cv2.imshow("Section #{}".format(idx), cropped_image)
 
-def black_out_section(image_to_edit, point, new_color = None):
-    if not new_color:
-        new_color = (0, 0, 0)   # default blacking out
-    #color = tuple(image_to_edit[point[0]][point[1]].copy())
-    color = tuple(image_to_edit[point[0]][point[1]])
+def color_specific_section(image, new_color, point):
+    old_color = tuple(image[point[0]][point[1]])
     cnt = 0
     to_do = [(point[0], point[1])]
-    image_to_edit[point[0]][point[1]] = np.array(new_color)
+    image[point[0]][point[1]] = np.array(new_color)
 
     while to_do:
         pt = to_do.pop(0)
         cnt += 1
         neighbors = [(pt[0] + 1, pt[1]), (pt[0] - 1, pt[1]), (pt[0], pt[1] - 1), (pt[0], pt[1] + 1)]
         for neighbor in neighbors:
-            if tuple(image_to_edit[neighbor[0]][neighbor[1]]) == color:
-                image_to_edit[neighbor[0]][neighbor[1]] = np.array(new_color)
+            if tuple(image[neighbor[0]][neighbor[1]]) == old_color:
+                image[neighbor[0]][neighbor[1]] = new_color
                 to_do.append((neighbor[0], neighbor[1]))
 
     print(cnt, "painted tiles")
 
+def change_sections_of_specific_color(image_to_edit, old_color, new_color):
+
+    cnt = 0
+    for i in range(image_to_edit.shape[0]):
+        for j in range(image_to_edit.shape[1]):
+            if tuple(image_to_edit[i][j]) == old_color:
+                color_specific_section(image_to_edit, new_color, (i, j))
+                cnt += 1
+    print("colored {} sections!".format(cnt))

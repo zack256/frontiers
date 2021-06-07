@@ -2,7 +2,6 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QGridLayout, QLineEdit
 
-import opcv
 import color_sections
 import to_json
 import edit_json
@@ -39,14 +38,22 @@ def show_section_with_context(img, sections, idx):
     edit_json.show_specific_section(img, sections, idx)
 
 def merge_button_handler():
-    merge_keep = int(merge_inp_1.text())
-    merge_merge = int(merge_inp_2.text())
-    merge_inp_1.clear()
-    merge_inp_2.clear()
-    sample_point = section_colors[merge_merge][1][4]
+    global section_colors
+    
+    merge_keep = int(merge_inp_1.text()); merge_merge = int(merge_inp_2.text())
+    merge_inp_1.clear(); merge_inp_2.clear()
+    #sample_point = section_colors[merge_merge][1][4]
+    merge_from_color = section_colors[merge_merge][0]
     merge_to_color = section_colors[merge_keep][0]
 
-    edit_json.black_out_section(editing_image, sample_point, merge_to_color)
+    edit_json.change_sections_of_specific_color(editing_image, merge_from_color, merge_to_color)
+
+    edit_json.se(section_colors[merge_keep][1], 0, section_colors[merge_merge][1][0], False)
+    edit_json.se(section_colors[merge_keep][1], 1, section_colors[merge_merge][1][1], True)
+    edit_json.se(section_colors[merge_keep][1], 2, section_colors[merge_merge][1][2], False)
+    edit_json.se(section_colors[merge_keep][1], 3, section_colors[merge_merge][1][3], True)
+
+    section_colors[merge_merge] = None
 
 def save_button_handler():
     path = testing_directory + "/better_sectioned.png"
