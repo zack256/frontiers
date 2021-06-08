@@ -35,14 +35,22 @@ def delete_all_widgets(layout):
         layout.itemAt(i).widget().setParent(None)
 
 def show_section_with_context(img, sections, idx):
+    if not sections[idx]:
+        print("section has been merged already!")
+        return
     edit_json.show_specific_section(img, sections, idx)
 
 def merge_button_handler():
     global section_colors
-    
+
     merge_keep = int(merge_inp_1.text()); merge_merge = int(merge_inp_2.text())
     merge_inp_1.clear(); merge_inp_2.clear()
     #sample_point = section_colors[merge_merge][1][4]
+
+    if not (section_colors[merge_merge] and section_colors[merge_keep]):
+        print("cant merge non existant section(s)")
+        return
+
     merge_from_color = section_colors[merge_merge][0]
     merge_to_color = section_colors[merge_keep][0]
 
@@ -59,6 +67,10 @@ def save_button_handler():
     path = testing_directory + "/better_sectioned.png"
     cv2.imwrite(path, editing_image)
 
+def view_image_handler():
+    #path = testing_directory + "/better_sectioned.png"
+    edit_json.show_image_workaround("title!", editing_image)
+
 def edit_json_button_handler():
     global merge_inp_1, merge_inp_2, section_colors, editing_image
     read_file = testing_directory + "/sectioned.png"
@@ -70,7 +82,7 @@ def edit_json_button_handler():
     delete_all_widgets(layout)
     btns = []
     num_cols = 5 * 2
-    num_rows = (len(section_colors) * 2) // num_cols + 1
+    num_rows_displaying_sections = (len(section_colors) * 2) // num_cols + 1
     for i in range(len(section_colors)):
         btn = QPushButton("view #" + str(i))
         btn.clicked.connect(lambda x, i=i : show_section_with_context(editing_image, section_colors, i))  # i=i to prevent closure
@@ -86,18 +98,22 @@ def edit_json_button_handler():
     merge_lab_2 = QLabel("Merge:")
     merge_inp_2 = QLineEdit()
 
-    layout.addWidget(merge_lab_1, num_rows, 0)
-    layout.addWidget(merge_inp_1, num_rows, 1)
-    layout.addWidget(merge_lab_2, num_rows, 2)
-    layout.addWidget(merge_inp_2, num_rows, 3)
+    layout.addWidget(merge_lab_1, num_rows_displaying_sections, 0)
+    layout.addWidget(merge_inp_1, num_rows_displaying_sections, 1)
+    layout.addWidget(merge_lab_2, num_rows_displaying_sections, 2)
+    layout.addWidget(merge_inp_2, num_rows_displaying_sections, 3)
 
     merge_button = QPushButton("Merge Sections")
     merge_button.clicked.connect(merge_button_handler)
-    layout.addWidget(merge_button, num_rows, 4)
+    layout.addWidget(merge_button, num_rows_displaying_sections, 4)
 
     save_button = QPushButton("Save")
     save_button.clicked.connect(save_button_handler)
-    layout.addWidget(save_button, num_rows, 5)
+    layout.addWidget(save_button, num_rows_displaying_sections, 5)
+
+    view_image_button = QPushButton("View Image")
+    view_image_button.clicked.connect(view_image_handler)
+    layout.addWidget(view_image_button, num_rows_displaying_sections + 1, 0)
 
 section_color_button = QPushButton("Section color")
 section_color_button.clicked.connect(section_color_button_handler)
