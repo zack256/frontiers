@@ -1,17 +1,13 @@
 import sys
-
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QGridLayout, QLineEdit
+import cv2
+import os
 
 import color_sections
 import to_json
 import edit_json
 from testing import testing_directory
-
-import cv2
-
-import os
-
-from utils import *
+import utils
 
 app = QApplication(sys.argv)
 
@@ -47,19 +43,23 @@ def merge_button_handler():
     merge_inp_1.clear(); merge_inp_2.clear()
     #sample_point = section_colors[merge_merge][1][4]
 
-    if not (section_colors[merge_merge] and section_colors[merge_keep]):
+    if not (section_colors[merge_merge] and (merge_keep == -1 or section_colors[merge_keep])):
         print("cant merge non existant section(s)")
         return
 
     merge_from_color = section_colors[merge_merge][0]
-    merge_to_color = section_colors[merge_keep][0]
+    if merge_keep == -1:
+        merge_to_color = utils.colors["WHITE"]
+    else:
+        merge_to_color = section_colors[merge_keep][0]
 
     edit_json.change_sections_of_specific_color(editing_image, merge_from_color, merge_to_color)
 
-    edit_json.se(section_colors[merge_keep][1], 0, section_colors[merge_merge][1][0], False)
-    edit_json.se(section_colors[merge_keep][1], 1, section_colors[merge_merge][1][1], True)
-    edit_json.se(section_colors[merge_keep][1], 2, section_colors[merge_merge][1][2], False)
-    edit_json.se(section_colors[merge_keep][1], 3, section_colors[merge_merge][1][3], True)
+    if merge_keep != -1:
+        edit_json.se(section_colors[merge_keep][1], 0, section_colors[merge_merge][1][0], False)
+        edit_json.se(section_colors[merge_keep][1], 1, section_colors[merge_merge][1][1], True)
+        edit_json.se(section_colors[merge_keep][1], 2, section_colors[merge_merge][1][2], False)
+        edit_json.se(section_colors[merge_keep][1], 3, section_colors[merge_merge][1][3], True)
 
     section_colors[merge_merge] = None
 
@@ -69,7 +69,7 @@ def save_button_handler():
 
 def view_image_handler():
     #path = testing_directory + "/better_sectioned.png"
-    edit_json.show_image_workaround("title!", editing_image)
+    edit_json.show_image_workaround("Viewing image", editing_image)
 
 def edit_json_button_handler():
     global merge_inp_1, merge_inp_2, section_colors, editing_image
@@ -90,7 +90,7 @@ def edit_json_button_handler():
         layout.addWidget(btn, (2 * i) // num_cols, (2 * i) % num_cols)
 
         color_box = QPushButton()
-        color_box.setStyleSheet("background-color: rgb" + str(bgr_to_rgb(section_colors[i][0])))
+        color_box.setStyleSheet("background-color: rgb" + str(utils.bgr_to_rgb(section_colors[i][0])))
         layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
 
     merge_lab_1 = QLabel("Keep:")

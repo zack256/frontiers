@@ -1,5 +1,10 @@
 import random
 
+colors = {
+    "BLACK" : (0, 0, 0),
+    "WHITE" : (255, 255, 255)
+}
+
 def is_black(cell):
     return sum(cell) == 0
 

@@ -91,7 +91,7 @@ def multipolygon_convert_sectioned_to_geojson(input_path, output_path):
     for i in range(sectioned_img.shape[0]):
         for j in range(sectioned_img.shape[1]):
 
-            if is_black(sectioned_img[i][j]):
+            if is_black(sectioned_img[i][j]) or is_white(sectioned_img[i][j]):
                 continue
             pos = (i, j)
             if pos in visited:

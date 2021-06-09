@@ -16,7 +16,7 @@ def gather_sections_from_sectioned_image(image):
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             cell = tuple(image[i][j])
-            if is_black(cell):
+            if is_black(cell) or is_white(cell):
                 continue
             if cell in section_colors:
                 se(section_colors[cell], 0, i, False)
@@ -61,7 +61,6 @@ def color_specific_section(image, new_color, point):
     print(cnt, "painted tiles")
 
 def change_sections_of_specific_color(image_to_edit, old_color, new_color):
-
     cnt = 0
     for i in range(image_to_edit.shape[0]):
         for j in range(image_to_edit.shape[1]):
