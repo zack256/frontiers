@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QGridLayout, QLineEdit
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QGridLayout, QLineEdit, QMainWindow
 import cv2
 import os
 
@@ -8,12 +8,6 @@ import to_json
 import edit_json
 from testing import testing_directory
 import utils
-
-app = QApplication(sys.argv)
-
-window = QWidget()
-window.setWindowTitle("Frontiers")
-window.setGeometry(60, 15, 280, 80)
 
 def section_color_button_handler():
     read_file = testing_directory + "/bw.png"
@@ -71,6 +65,10 @@ def view_image_handler():
     #path = testing_directory + "/better_sectioned.png"
     edit_json.show_image_workaround("Viewing image", editing_image)
 
+def back_to_main_handler():
+    ej_window.hide()
+    main_window.show()
+
 def edit_json_button_handler():
     global merge_inp_1, merge_inp_2, section_colors, editing_image
     read_file = testing_directory + "/sectioned.png"
@@ -79,63 +77,74 @@ def edit_json_button_handler():
         print("needs to be sectioned first.")
         return
     section_colors = edit_json.gather_sections_from_sectioned_image(editing_image)
-    delete_all_widgets(layout)
+    #delete_all_widgets(layout)
     btns = []
     num_cols = 5 * 2
-    num_rows_displaying_sections = (len(section_colors) * 2) // num_cols + 1
+    section_rows = (len(section_colors) * 2) // num_cols + 1
     for i in range(len(section_colors)):
         btn = QPushButton("view #" + str(i))
         btn.clicked.connect(lambda x, i=i : show_section_with_context(editing_image, section_colors, i))  # i=i to prevent closure
         btns.append(btn)
-        layout.addWidget(btn, (2 * i) // num_cols, (2 * i) % num_cols)
+        ej_layout.addWidget(btn, (2 * i) // num_cols, (2 * i) % num_cols)
 
         color_box = QPushButton()
         color_box.setStyleSheet("background-color: rgb" + str(utils.bgr_to_rgb(section_colors[i][0])))
-        layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
+        ej_layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
 
     merge_lab_1 = QLabel("Keep:")
     merge_inp_1 = QLineEdit()
     merge_lab_2 = QLabel("Merge:")
     merge_inp_2 = QLineEdit()
 
-    layout.addWidget(merge_lab_1, num_rows_displaying_sections, 0)
-    layout.addWidget(merge_inp_1, num_rows_displaying_sections, 1)
-    layout.addWidget(merge_lab_2, num_rows_displaying_sections, 2)
-    layout.addWidget(merge_inp_2, num_rows_displaying_sections, 3)
+    ej_layout.addWidget(merge_lab_1, section_rows, 0)
+    ej_layout.addWidget(merge_inp_1, section_rows, 1)
+    ej_layout.addWidget(merge_lab_2, section_rows, 2)
+    ej_layout.addWidget(merge_inp_2, section_rows, 3)
 
-    merge_button = QPushButton("Merge Sections")
-    merge_button.clicked.connect(merge_button_handler)
-    layout.addWidget(merge_button, num_rows_displaying_sections, 4)
+    merge_button = ej_layout.add_button("Merge Sections", merge_button_handler, section_rows, 4)
+    save_button = ej_layout.add_button("Save", save_button_handler, section_rows, 5)
+    view_image_button = ej_layout.add_button("View Image", view_image_handler, section_rows + 1, 0)
+    back_button = ej_layout.add_button("Back (doesn't save)", back_to_main_handler, section_rows + 1, 1)
 
-    save_button = QPushButton("Save")
-    save_button.clicked.connect(save_button_handler)
-    layout.addWidget(save_button, num_rows_displaying_sections, 5)
-
-    view_image_button = QPushButton("View Image")
-    view_image_button.clicked.connect(view_image_handler)
-    layout.addWidget(view_image_button, num_rows_displaying_sections + 1, 0)
-
-section_color_button = QPushButton("Section color")
-section_color_button.clicked.connect(section_color_button_handler)
-
-to_json_button = QPushButton("Convert to geojson")
-to_json_button.clicked.connect(to_json_button_handler)
-
-edit_json_button = QPushButton("Edit sections")
-edit_json_button.clicked.connect(edit_json_button_handler)
+    main_window.hide()
+    ej_window.show()
 
 merge_button = None
 merge_inp_1 = merge_inp_2 = None
 editing_image = None
-
-layout = QGridLayout()
-layout.addWidget(section_color_button)
-layout.addWidget(to_json_button)
-layout.addWidget(edit_json_button)
-window.setLayout(layout)
-
 section_colors = None
 
-window.show()
+class Window(QWidget):
+    def __init__(self, title, layout):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.setLayout(layout)
+
+class Layout(QGridLayout):
+    def __init__(self):
+        super().__init__()
+    def add_button(self, label, click_function, row = -1, col = -1):
+        button = QPushButton(label)
+        button.clicked.connect(click_function)
+        if row != -1 and col != -1:
+            self.addWidget(button, row, col)
+        else:
+            self.addWidget(button)
+        return button
+
+app = QApplication(sys.argv)
+
+main_layout = Layout()
+section_color_button = main_layout.add_button("Section color", section_color_button_handler)
+to_json_button = main_layout.add_button("Convert to geojson", to_json_button_handler)
+edit_json_button = main_layout.add_button("Edit sections", edit_json_button_handler)
+
+main_window = Window("Frontiers", main_layout)
+main_window.setGeometry(60, 15, 280, 80)
+
+ej_layout = Layout()
+ej_window = Window("Editing Sections", ej_layout)
+
+main_window.show()
 
 sys.exit(app.exec_())
