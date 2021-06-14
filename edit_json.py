@@ -4,30 +4,29 @@ import json
 
 from utils import *
 
+from section import GJSection
+
+'''
 def se(struc, idx, compare_with, do_max):    # set extreme
     if do_max:
         struc[idx] = max(compare_with, struc[idx])
     else:
         struc[idx] = min(compare_with, struc[idx])
+'''
 
 def gather_sections_from_sectioned_image(image):
     section_colors = {}
-    sections = []
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             cell = tuple(image[i][j])
             if is_black(cell) or is_white(cell):
                 continue
             if cell in section_colors:
-                se(section_colors[cell], 0, i, False)
-                se(section_colors[cell], 1, i, True)
-                se(section_colors[cell], 2, j, False)
-                se(section_colors[cell], 3, j, True)
+                section_colors[cell].update_extrema(i, j)
             else:
-                section_colors[cell] = [i, i, j, j]  # northernmost pt, south, west, east.
-    for k in section_colors:
-        sections.append((k, section_colors[k]))
-    return sections
+                new_section = GJSection(color = cell, extrema = [i, i, j, j])
+                section_colors[cell] = new_section
+    return list(section_colors.values())
 
 def show_image_workaround(title, image):
     # investigate further!!!
@@ -38,7 +37,7 @@ def show_image_workaround(title, image):
 
 def show_specific_section(image, sections, idx):
     margin = 20 # for context
-    extrema = sections[idx][1]
+    extrema = sections[idx].extrema
     cropped_image = image[max(0, extrema[0] - margin) : min(image.shape[0], extrema[1] + margin), max(0, extrema[2] - margin) : min(image.shape[1], extrema[3] + margin)]
     show_image_workaround("Section #{}".format(idx), cropped_image)
     #cv2.imshow("Section #{}".format(idx), cropped_image)
