@@ -16,9 +16,14 @@ def section_color_button_handler():
     color_sections.color_image(read_file, write_file)
 
 def to_json_button_handler():
+    if not sections:
+        print("need to make sections first."); return
     read_file = testing_directory + "/sectioned.png"
     write_file = testing_directory + "/gj.json"
-    to_json.multipolygon_convert_sectioned_to_geojson(read_file, write_file)
+    color_to_section_dict = {}
+    for section in sections:
+        color_to_section_dict[section.color] = section
+    to_json.multipolygon_convert_sectioned_to_geojson(read_file, write_file, color_to_section_dict)
 
 def delete_all_widgets(layout):
     num_children = layout.count()
@@ -66,8 +71,14 @@ def back_to_main_handler():
     ej_window.hide()
     main_window.show()
 
+def set_name_handler():
+    global sections
+    section_idx = int(set_name_inp_1.text()); new_name = set_name_inp_2.text()
+    set_name_inp_1.clear(); set_name_inp_2.clear()
+    sections[section_idx].name = new_name
+
 def edit_json_button_handler():
-    global merge_inp_1, merge_inp_2, sections, editing_image
+    global merge_inp_1, merge_inp_2, sections, editing_image, set_name_inp_1, set_name_inp_2
     read_file = testing_directory + "/sectioned.png"
     editing_image = cv2.imread(read_file)
     if not os.path.isfile(read_file):
@@ -88,26 +99,33 @@ def edit_json_button_handler():
         color_box.setStyleSheet("background-color: rgb" + str(utils.bgr_to_rgb(sections[i].color)))
         ej_layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
 
-    merge_lab_1 = QLabel("Keep:")
     merge_inp_1 = QLineEdit()
-    merge_lab_2 = QLabel("Merge:")
     merge_inp_2 = QLineEdit()
+    set_name_inp_1 = QLineEdit()
+    set_name_inp_2 = QLineEdit()
 
-    ej_layout.addWidget(merge_lab_1, section_rows, 0)
     ej_layout.addWidget(merge_inp_1, section_rows, 1)
-    ej_layout.addWidget(merge_lab_2, section_rows, 2)
     ej_layout.addWidget(merge_inp_2, section_rows, 3)
+
+    merge_lab_1 = ej_layout.add_label("Keep:", section_rows, 0)
+    merge_lab_2 = ej_layout.add_label("Merge:", section_rows, 2)
+    set_name_lab_1 = ej_layout.add_label("Section # to rename:", section_rows + 1, 0)
+    set_name_lab_2 = ej_layout.add_label("Name:", section_rows + 1, 2)
+
+    ej_layout.addWidget(set_name_inp_1, section_rows + 1, 1)
+    ej_layout.addWidget(set_name_inp_2, section_rows + 1, 3)
 
     merge_button = ej_layout.add_button("Merge Sections", merge_button_handler, section_rows, 4)
     save_button = ej_layout.add_button("Save", save_button_handler, section_rows, 5)
-    view_image_button = ej_layout.add_button("View Image", view_image_handler, section_rows + 1, 0)
-    back_button = ej_layout.add_button("Back (doesn't save)", back_to_main_handler, section_rows + 1, 1)
+    set_name_button = ej_layout.add_button("Set Name", set_name_handler, section_rows + 1, 4)
+    view_image_button = ej_layout.add_button("View Image", view_image_handler, section_rows + 2, 0)
+    back_button = ej_layout.add_button("Back (doesn't save)", back_to_main_handler, section_rows + 2, 1)
 
     main_window.hide()
     ej_window.show()
 
-merge_button = None
 merge_inp_1 = merge_inp_2 = None
+set_name_inp_1 = set_name_inp_1 = None
 editing_image = None
 sections = None
 
@@ -120,14 +138,19 @@ class Window(QWidget):
 class Layout(QGridLayout):
     def __init__(self):
         super().__init__()
+    def add_widget_to_grid(self, widget, row = -1, col = -1):
+        if row != -1 and col != -1:
+            self.addWidget(widget, row, col)
+        else:
+            self.addWidget(widget)
     def add_button(self, label, click_function, row = -1, col = -1):
         button = QPushButton(label)
         button.clicked.connect(click_function)
-        if row != -1 and col != -1:
-            self.addWidget(button, row, col)
-        else:
-            self.addWidget(button)
+        self.add_widget_to_grid(button, row, col)
         return button
+    def add_label(self, text, row = -1, col = -1):
+        label = QLabel(text)
+        self.add_widget_to_grid(label, row, col)
 
 app = QApplication(sys.argv)
 

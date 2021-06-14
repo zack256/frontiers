@@ -71,18 +71,18 @@ def gen_json_base():
     d["features"] = []
     return d
 
-def gen_coord_list(outline_pts, scalar):
+def gen_coord_list(outline_pts, scalar, round_arg = 2):
     l = []
     for pt in outline_pts:
         # reverses pts to get an x, y instead of row, col.
         # also scales down so can fit on world map.
         # also does negative for the y coord, if positive it would render upside down, maybe :)
-        x_coord = pt[1] * scalar
-        y_coord = pt[0] * scalar * -1
+        x_coord = round(pt[1] * scalar, round_arg)
+        y_coord = round(pt[0] * scalar * -1, round_arg)
         l.append([x_coord, y_coord])
     return l
 
-def multipolygon_convert_sectioned_to_geojson(input_path, output_path):
+def multipolygon_convert_sectioned_to_geojson(input_path, output_path, color_to_section_dict):
     d = gen_json_base()
     sectioned_img = cv2.imread(input_path)
     visited = set()
@@ -110,8 +110,11 @@ def multipolygon_convert_sectioned_to_geojson(input_path, output_path):
                 same_colored_sections[color] = [coord_list]
 
     for specific_color in same_colored_sections:
+        section = color_to_section_dict[specific_color]
         new_feature = {"type": "Feature",
-                       "properties": {},
+                       "properties": {
+                           "name" : section.name
+                       },
                        "geometry": {
                            "type": "MultiPolygon", "coordinates": []}}
         for shape in same_colored_sections[specific_color]:

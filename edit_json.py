@@ -6,14 +6,6 @@ from utils import *
 
 from section import GJSection
 
-'''
-def se(struc, idx, compare_with, do_max):    # set extreme
-    if do_max:
-        struc[idx] = max(compare_with, struc[idx])
-    else:
-        struc[idx] = min(compare_with, struc[idx])
-'''
-
 def gather_sections_from_sectioned_image(image):
     section_colors = {}
     for i in range(image.shape[0]):
@@ -37,9 +29,12 @@ def show_image_workaround(title, image):
 
 def show_specific_section(image, sections, idx):
     margin = 20 # for context
-    extrema = sections[idx].extrema
+    extrema = sections[idx].extrema; section_name = sections[idx].name
     cropped_image = image[max(0, extrema[0] - margin) : min(image.shape[0], extrema[1] + margin), max(0, extrema[2] - margin) : min(image.shape[1], extrema[3] + margin)]
-    show_image_workaround("Section #{}".format(idx), cropped_image)
+    if section_name:
+        show_image_workaround("Section #{} ({})".format(idx, section_name), cropped_image)
+    else:
+        show_image_workaround("Section #{}".format(idx), cropped_image)
     #cv2.imshow("Section #{}".format(idx), cropped_image)
 
 def color_specific_section(image, new_color, point):
@@ -56,7 +51,6 @@ def color_specific_section(image, new_color, point):
             if tuple(image[neighbor[0]][neighbor[1]]) == old_color:
                 image[neighbor[0]][neighbor[1]] = new_color
                 to_do.append((neighbor[0], neighbor[1]))
-
     print(cnt, "painted tiles")
 
 def change_sections_of_specific_color(image_to_edit, old_color, new_color):
