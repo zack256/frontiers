@@ -82,7 +82,7 @@ def gen_coord_list(outline_pts, scalar, round_arg = 2):
         l.append([x_coord, y_coord])
     return l
 
-def multipolygon_convert_sectioned_to_geojson(input_path, output_path, color_to_section_dict):
+def multipolygon_convert_sectioned_to_geojson(input_path, output_path, color_to_section_dict = None):
     d = gen_json_base()
     sectioned_img = cv2.imread(input_path)
     visited = set()
@@ -110,13 +110,13 @@ def multipolygon_convert_sectioned_to_geojson(input_path, output_path, color_to_
                 same_colored_sections[color] = [coord_list]
 
     for specific_color in same_colored_sections:
-        section = color_to_section_dict[specific_color]
+        section = color_to_section_dict[specific_color] if color_to_section_dict else None
         new_feature = {"type": "Feature",
-                       "properties": {
-                           "name" : section.name
-                       },
+                       "properties": {},
                        "geometry": {
                            "type": "MultiPolygon", "coordinates": []}}
+        if section:
+            new_feature["properties"]["name"] = section.name
         for shape in same_colored_sections[specific_color]:
             new_feature["geometry"]["coordinates"].append( [ shape ] )
 
