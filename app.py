@@ -33,20 +33,19 @@ def simple_function_row(layout, label_texts, button_text, click_function, row = 
     return inps, labels, button
 
 def section_color_button_handler(filenames):
-    read_file = testing_directory + "/" + filenames[0]
-    write_file = testing_directory + "/" + filenames[1]
-    color_sections.color_image(read_file, write_file)
+    write_file = testing_directory + filenames[0]
+    color_sections.color_image(mi, write_file)
 
 def to_json_button_handler(filenames):
-    read_file = testing_directory + "/" + filenames[0]
-    write_file = testing_directory + "/" + filenames[1]
+    write_file = testing_directory + filenames[0]
+    sections = mi.sections
     if not sections:
         color_to_section_dict = None
     else:
         color_to_section_dict = {}
         for section in sections:
             color_to_section_dict[section.color] = section
-    to_json.multipolygon_convert_sectioned_to_geojson(read_file, write_file, color_to_section_dict)
+    to_json.multipolygon_convert_sectioned_to_geojson(mi, write_file, color_to_section_dict)
 
 def delete_all_widgets(layout):
     num_children = layout.count()
@@ -79,11 +78,10 @@ def merge_button_handler(input_texts):
     sections[merge_merge] = None
 
 def ej_save_button_handler(input_texts):
-    path = testing_directory + "/" + input_texts[0]
+    path = testing_directory + input_texts[0]
     cv2.imwrite(path, editing_image)
 
 def view_image_handler():
-    #path = testing_directory + "/better_sectioned.png"
     edit_json.show_image_workaround("Viewing image", editing_image)
 
 def back_to_main_handler():
@@ -95,11 +93,17 @@ def set_name_handler(input_texts):
     section_idx = int(input_texts[0]); new_name = input_texts[1]
     sections[section_idx].name = new_name
 
+def load_image_handler(input_texts):
+    global mi
+    path = testing_directory + input_texts[0]
+    mi = MapImage(path)
+    load_main_window()
+
 def edit_json_button_handler(filenames):
     global sections, editing_image
     ej_layout = ej_window.layout()
     delete_all_widgets(ej_layout)
-    read_file = testing_directory + "/" + filenames[0]
+    read_file = testing_directory + filenames[0]
     editing_image = cv2.imread(read_file)
     sections = edit_json.gather_sections_from_sectioned_image(editing_image)
     btns = []
@@ -125,8 +129,27 @@ def edit_json_button_handler(filenames):
     main_window.hide()
     ej_window.show()
 
+def load_main_window():
+    start_window.hide()
+    main_window.show()
+
+def back_to_start_handler(_filenames):
+    global mi
+    mi = None
+    main_window.hide()
+    start_window.show()
+
+
 editing_image = None
 sections = None
+mi = None
+
+class MapImage:
+    def __init__(self, path):
+        self.image = cv2.imread(path)
+        self.sections = None
+    def save(self, path):
+        cv2.imwrite(path, self.image)
 
 class Window(QWidget):
     def __init__(self, title, layout):
@@ -156,16 +179,20 @@ class Layout(QGridLayout):
 
 app = QApplication(sys.argv)
 
-main_window = ej_window = None
+main_window = ej_window = start_window = None
 
 def init_windows():
-    global main_window, ej_window
+    global main_window, ej_window, start_window
 
+    start_layout = Layout()
     main_layout = Layout()
 
-    section_color_row = simple_function_row(main_layout, ["Read", "Write"], "Section color", section_color_button_handler, 0)
-    to_json_row = simple_function_row(main_layout, ["Read", "Write"], "Convert to GeoJson", to_json_button_handler, 1)
+    load_image_row = simple_function_row(start_layout, ["Read"], "Load Image", load_image_handler, 0)
+
+    section_color_bw_row = simple_function_row(main_layout, ["Write"], "Section color from BW", section_color_button_handler, 0)
+    to_json_row = simple_function_row(main_layout, ["Write"], "Convert to GeoJson", to_json_button_handler, 1)
     edit_json_button = simple_function_row(main_layout, ["Read"], "Edit sections", edit_json_button_handler, 2)
+    back_to_start_button = simple_function_row(main_layout, [], "Back", back_to_start_handler, 3)
 
     main_window = Window("Frontiers", main_layout)
     main_window.setGeometry(60, 15, 280, 80)
@@ -173,7 +200,10 @@ def init_windows():
     ej_layout = Layout()
     ej_window = Window("Editing Sections", ej_layout)
 
-    main_window.show()
+    start_window = Window("Frontiers", start_layout)
+    start_window.setGeometry(60, 15, 280, 80)
+
+    start_window.show()
 
 init_windows()
 

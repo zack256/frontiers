@@ -37,8 +37,8 @@ def color_section(img, start, color):
                 img[neighbor[0]][neighbor[1]] = color
                 to_visit.append(neighbor)
 
-def color_image(read_path, write_path):
-    img = cv2.imread(read_path)
+def color_image(mi, write_path):
+    img = mi.image
     colors = set()
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
@@ -46,4 +46,5 @@ def color_image(read_path, write_path):
                 color = generate_unique_color(colors)
                 colors.add(color)
                 color_section(img, (i, j), color)
-    cv2.imwrite(write_path, img)
+    #cv2.imwrite(write_path, img)
+    mi.save(write_path)

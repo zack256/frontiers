@@ -82,9 +82,9 @@ def gen_coord_list(outline_pts, scalar, round_arg = 2):
         l.append([x_coord, y_coord])
     return l
 
-def multipolygon_convert_sectioned_to_geojson(input_path, output_path, color_to_section_dict = None):
+def multipolygon_convert_sectioned_to_geojson(mi, output_path, color_to_section_dict = None):
     d = gen_json_base()
-    sectioned_img = cv2.imread(input_path)
+    sectioned_img = mi.image
     visited = set()
     same_colored_sections = {}
 
