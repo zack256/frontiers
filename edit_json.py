@@ -6,7 +6,8 @@ from utils import *
 
 from section import GJSection
 
-def gather_sections_from_sectioned_image(image):
+def gather_sections_from_sectioned_image(mi):
+    image = mi.image
     section_colors = {}
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):

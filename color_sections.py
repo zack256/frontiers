@@ -3,6 +3,7 @@ import numpy as np
 import random
 
 from utils import *
+from map_image import MapImage
 
 def get_neighbor(img, pos, direction):
     # NESW
@@ -37,8 +38,8 @@ def color_section(img, start, color):
                 img[neighbor[0]][neighbor[1]] = color
                 to_visit.append(neighbor)
 
-def color_image(mi, write_path):
-    img = mi.image
+def color_image(mi, new_mi_name):
+    img = mi.image.copy()
     colors = set()
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
@@ -46,5 +47,5 @@ def color_image(mi, write_path):
                 color = generate_unique_color(colors)
                 colors.add(color)
                 color_section(img, (i, j), color)
-    #cv2.imwrite(write_path, img)
-    mi.save(write_path)
+    new_mi = MapImage(image = img, name = new_mi_name)
+    return new_mi

@@ -9,6 +9,7 @@ import edit_json
 from testing import testing_directory
 import utils
 from section import GJSection
+from map_image import MapImage
 
 def simple_function_wrapper(text_inps, func, **click_function_kwargs):
     texts = []; n = len(text_inps)
@@ -32,9 +33,10 @@ def simple_function_row(layout, label_texts, button_text, click_function, row = 
     button = layout.add_button(button_text, lambda : wrapped_func(), row, 2 * n)
     return inps, labels, button
 
-def section_color_button_handler(filenames):
-    write_file = testing_directory + filenames[0]
-    color_sections.color_image(mi, write_file)
+def section_color_button_handler(inps):
+    new_mi_name = inps[0]
+    new_mi = color_sections.color_image(mi, new_mi_name)
+    mis[new_mi_name] = new_mi
 
 def to_json_button_handler(filenames):
     write_file = testing_directory + filenames[0]
@@ -77,13 +79,6 @@ def merge_button_handler(input_texts):
         sections[merge_keep].merge_extrema(sections[merge_merge].extrema)
     sections[merge_merge] = None
 
-def ej_save_button_handler(input_texts):
-    path = testing_directory + input_texts[0]
-    cv2.imwrite(path, editing_image)
-
-def view_image_handler():
-    edit_json.show_image_workaround("Viewing image", editing_image)
-
 def back_to_main_handler():
     ej_window.hide()
     main_window.show()
@@ -93,13 +88,11 @@ def set_name_handler(input_texts):
     section_idx = int(input_texts[0]); new_name = input_texts[1]
     sections[section_idx].name = new_name
 
-def edit_json_button_handler(filenames):
-    global sections, editing_image
+def edit_json_button_handler(_inps):
+    global mi
     ej_layout = ej_window.layout()
     delete_all_widgets(ej_layout)
-    read_file = testing_directory + filenames[0]
-    editing_image = cv2.imread(read_file)
-    sections = edit_json.gather_sections_from_sectioned_image(editing_image)
+    sections = edit_json.gather_sections_from_sectioned_image(mi)
     btns = []
     num_cols = 5 * 2
     section_rows = (len(sections) * 2) // num_cols + 1
@@ -113,19 +106,24 @@ def edit_json_button_handler(filenames):
         color_box.setStyleSheet("background-color: rgb" + str(utils.bgr_to_rgb(sections[i].color)))
         ej_layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
 
-    view_image_button = ej_layout.add_button("View Image", view_image_handler, section_rows + 3, 0)
+    view_image_button = ej_layout.add_button("View Image", show_img_handler, section_rows + 3, 0)
     back_button = ej_layout.add_button("Back (doesn't save)", back_to_main_handler, section_rows + 3, 1)
 
     merge_row = simple_function_row(ej_layout, ["Keep:", "Merge:"], "Merge Sections", merge_button_handler, section_rows)
     set_name_row = simple_function_row(ej_layout, ["Section # to rename:", "Name:"], "Set Name", set_name_handler, section_rows + 1)
-    save_row = simple_function_row(ej_layout, ["Save to:"], "Save", ej_save_button_handler, section_rows + 2)
+    save_row = simple_function_row(ej_layout, ["Save to:"], "Save", save_img_handler, section_rows + 2)
 
     main_window.hide()
     ej_window.show()
 
-def show_img_handler(_inps):
+def show_img_handler(_inps = None):
     global mi
     mi.show()
+
+def save_img_handler(inps):
+    global mi
+    path = testing_directory + inps[0]
+    mi.save(path)
 
 def load_new_mi_handler(input_texts):
     global mis, mi
@@ -137,7 +135,6 @@ def load_new_mi_handler(input_texts):
 
 def load_existing_mi_handler(_input_texts, mi_name):
     global mis, mi
-    print("Clicked on {}".format(mi_name))
     mi = mis[mi_name]
     load_main_window()
 
@@ -162,16 +159,6 @@ editing_image = None
 sections = None
 mi = None
 mis = {}
-
-class MapImage:
-    def __init__(self, path, name = ""):
-        self.image = cv2.imread(path)
-        self.sections = None
-        self.name = name if name else path
-    def save(self, path):
-        cv2.imwrite(path, self.image)
-    def show(self):
-        edit_json.show_image_workaround("Viewing {}".format(self.name), self.image)
 
 class Window(QWidget):
     def __init__(self, title, layout):
@@ -211,11 +198,12 @@ def init_windows():
 
     load_image_row = simple_function_row(start_layout, ["Read", "Name"], "Load Image", load_new_mi_handler, 0)
 
-    section_color_bw_row = simple_function_row(main_layout, ["Write"], "Section color from BW", section_color_button_handler, 0)
+    section_color_bw_row = simple_function_row(main_layout, ["New image name"], "Section color from BW", section_color_button_handler, 0)
     to_json_row = simple_function_row(main_layout, ["Write"], "Convert to GeoJson", to_json_button_handler, 1)
-    edit_json_button = simple_function_row(main_layout, ["Read"], "Edit sections", edit_json_button_handler, 2)
+    edit_json_button = simple_function_row(main_layout, [], "Edit sections", edit_json_button_handler, 2)
     show_img_button = simple_function_row(main_layout, [], "Show Image", show_img_handler, 3)
-    back_to_start_button = simple_function_row(main_layout, [], "Back", back_to_start_handler, 4)
+    save_img_button = simple_function_row(main_layout, ["Write"], "Save image", save_img_handler, 4)
+    back_to_start_button = simple_function_row(main_layout, [], "Back", back_to_start_handler, 5)
 
     main_window = Window("Frontiers", main_layout)
     main_window.setGeometry(60, 15, 280, 80)
