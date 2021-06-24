@@ -61,8 +61,7 @@ def show_section_with_context(img, sections, idx):
     edit_json.show_specific_section(img, sections, idx)
 
 def merge_button_handler(input_texts):
-    global sections
-
+    sections = mi.sections
     merge_keep, merge_merge = map(int, input_texts)
     if not (sections[merge_merge] and (merge_keep == -1 or sections[merge_keep])):
         print("cant merge non existant section(s)")
@@ -74,31 +73,30 @@ def merge_button_handler(input_texts):
     else:
         merge_to_color = sections[merge_keep].color
 
-    edit_json.change_sections_of_specific_color(editing_image, merge_from_color, merge_to_color)
+    edit_json.change_sections_of_specific_color(mi.image, merge_from_color, merge_to_color)
     if merge_keep != -1:
         sections[merge_keep].merge_extrema(sections[merge_merge].extrema)
     sections[merge_merge] = None
 
 def back_to_main_handler():
+    mi.remove_merged_sections()
     ej_window.hide()
     main_window.show()
 
 def set_name_handler(input_texts):
-    global sections
     section_idx = int(input_texts[0]); new_name = input_texts[1]
-    sections[section_idx].name = new_name
+    mi.sections[section_idx].name = new_name
 
 def edit_json_button_handler(_inps):
-    global mi
     ej_layout = ej_window.layout()
     delete_all_widgets(ej_layout)
-    sections = edit_json.gather_sections_from_sectioned_image(mi)
+    sections = mi.sections
     btns = []
     num_cols = 5 * 2
     section_rows = (len(sections) * 2) // num_cols + 1
     for i in range(len(sections)):
         btn = QPushButton("view #" + str(i))
-        btn.clicked.connect(lambda x, i=i : show_section_with_context(editing_image, sections, i))  # i=i to prevent closure
+        btn.clicked.connect(lambda x, i=i : show_section_with_context(mi.image, sections, i))  # i=i to prevent closure
         btns.append(btn)
         ej_layout.addWidget(btn, (2 * i) // num_cols, (2 * i) % num_cols)
 
@@ -107,7 +105,7 @@ def edit_json_button_handler(_inps):
         ej_layout.addWidget(color_box, (2 * i + 1) // num_cols, (2 * i + 1) % num_cols)
 
     view_image_button = ej_layout.add_button("View Image", show_img_handler, section_rows + 3, 0)
-    back_button = ej_layout.add_button("Back (doesn't save)", back_to_main_handler, section_rows + 3, 1)
+    back_button = ej_layout.add_button("Back", back_to_main_handler, section_rows + 3, 1)
 
     merge_row = simple_function_row(ej_layout, ["Keep:", "Merge:"], "Merge Sections", merge_button_handler, section_rows)
     set_name_row = simple_function_row(ej_layout, ["Section # to rename:", "Name:"], "Set Name", set_name_handler, section_rows + 1)
@@ -117,16 +115,14 @@ def edit_json_button_handler(_inps):
     ej_window.show()
 
 def show_img_handler(_inps = None):
-    global mi
     mi.show()
 
 def save_img_handler(inps):
-    global mi
     path = testing_directory + inps[0]
     mi.save(path)
 
 def load_new_mi_handler(input_texts):
-    global mis, mi
+    global mi
     path = testing_directory + input_texts[0]
     name = input_texts[1]
     mi = MapImage(path, name)
@@ -134,7 +130,7 @@ def load_new_mi_handler(input_texts):
     load_main_window()
 
 def load_existing_mi_handler(_input_texts, mi_name):
-    global mis, mi
+    global mi
     mi = mis[mi_name]
     load_main_window()
 
@@ -144,7 +140,7 @@ def load_main_window():
     main_window.show()
 
 def back_to_start_handler(_filenames):
-    global mi, mis
+    global mi
     mi = None
     delete_all_widgets(start_window.layout())
     load_image_row = simple_function_row(start_window.layout(), ["Read", "Name"], "Load Image", load_new_mi_handler, 0)
@@ -155,8 +151,6 @@ def back_to_start_handler(_filenames):
     main_window.hide()
     start_window.show()
 
-editing_image = None
-sections = None
 mi = None
 mis = {}
 
